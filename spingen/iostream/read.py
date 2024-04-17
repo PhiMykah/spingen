@@ -3,11 +3,12 @@ import xml.etree.ElementTree as ET
 from ..data import *
 MAT_ROOT = 'coupling_matrix'
 LW_PATH = MAT_ROOT
-SPIN_NAME_PATH = MAT_ROOT + '/spin_names'
-CSHIFT_PATH = MAT_ROOT + '/chemical_shifts_ppm'
-COUPLING_PATH = MAT_ROOT + '/couplings_Hz'
-CENTER_PATH = MAT_ROOT + '/DSS_region'
+SPIN_NAME_PATH = 'spin_names'
+CSHIFT_PATH = 'chemical_shifts_ppm'
+COUPLING_PATH = 'couplings_Hz'
+CENTER_PATH = 'DSS_region'
 
+MAT_NAME = "spin_matrix"
 type ele = ET.Element
 
 def readXML(xmlfile : str) -> tuple[list[str], list[ppm], list[Hz], np.ndarray, ppm]:
@@ -30,10 +31,14 @@ def readXML(xmlfile : str) -> tuple[list[str], list[ppm], list[Hz], np.ndarray, 
         lw_str = cast(str, cast(ele, lw_element).text)
         line_width : Hz = float(lw_str)
 
+    # Collect primary spin matrix
+    # ---------------------------
+    spin_matrix = cast(ele,root.find('coupling_matrix'))
+    # Must ensure to only collect the main spin matrix
     # Set Spin names
     # --------------
     # Extra code is used for typing assertion, casting allegedly does not affect runtime
-    spin_name_list = root.findall(SPIN_NAME_PATH + "/spin")
+    spin_name_list = spin_matrix.findall(SPIN_NAME_PATH + "/spin")
     idx = 0
     while(len(spin_names) < len(spin_name_list)):
         spindex = spin_name_list[idx].get('index')
@@ -50,7 +55,7 @@ def readXML(xmlfile : str) -> tuple[list[str], list[ppm], list[Hz], np.ndarray, 
     # Set Chemical Shift values
     # -------------------------
     # Extra code is used for typing assertion, casting allegedly does not affect runtime
-    cshift_list = root.findall(CSHIFT_PATH + "/cs")
+    cshift_list = spin_matrix.findall(CSHIFT_PATH + "/cs")
     idx = 0
     while(len(chem_shifts) < len(cshift_list)):
         spindex = cshift_list[idx].get('index')
@@ -67,7 +72,7 @@ def readXML(xmlfile : str) -> tuple[list[str], list[ppm], list[Hz], np.ndarray, 
     # Coupling values
     # ---------------
     # Extra code is used for typing assertion, casting allegedly does not affect runtime
-    cpl_list = root.findall(COUPLING_PATH + "/coupling")
+    cpl_list = spin_matrix.findall(COUPLING_PATH + "/coupling")
     idx = 0
     while(len(couplings_list) < len(cpl_list)):
         spindex_pair = (cpl_list[idx].get('from_index'),cpl_list[idx].get('to_index'))

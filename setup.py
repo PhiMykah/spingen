@@ -14,6 +14,6 @@ setup(name='spingen',
     },
     author='Micah Smith',
     author_email='mykahsmith21@gmail.com',
-    description='Python implementation of Nuclear Magnetic \
-                Resonance (NMR) signal analysis program \'nmrPipe\''
+    description='NMR Spectra generation through \
+                 the use of spin matrices.'
 )
