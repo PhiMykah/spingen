@@ -2,7 +2,7 @@ import sys
 from spingen.parser import *
 from spingen.data import SSystem, frequency_to_time
 import numpy as np
-from spingen.iostream import readXML
+from spingen.iostream import loadSystems
 from pathlib import Path
 
 def main():
@@ -22,21 +22,25 @@ def main():
     # Somewhere specify solvent
     system_count = argv.sub_count
 
-    names, shifts, widths, matrix, center = readXML(argv.input)
-    
-    newSystem = SSystem(names, shifts, widths, matrix, field_strength, points, spec_width, obs_freq, center)
+    systems = loadSystems(argv.input, system_count, field_strength, points, spec_width, obs_freq)
 
-    peaks = np.array(newSystem.peaklist())
+    for i in range(len(systems)):
+        peaks = np.array(systems[i].peaklist())
+        # if domain in ['t', 'time']:
+        #     peaks = frequency_to_time(peaks)
 
-    # if domain in ['t', 'time']:
-    #     peaks = frequency_to_time(peaks)
-
-    if format == 'npy':
-        np.save(output_file, peaks)
-    elif format == 'csv':
-        np.savetxt(f"{output_file}.{format}", peaks, delimiter=',')
-    else:
-        np.savetxt(f"{output_file}.{format}", peaks)
+        if len(systems) == 1:
+            output = output_file
+        else:
+            output = output_file + "_{:02}".format(i+1)
+        match format:
+            case 'npy':
+                np.save(output, peaks)
+            case 'csv':
+                np.savetxt(f"{output}.{format}", peaks, delimiter=',')
+            case _:
+                np.savetxt(f"{output}.{format}", peaks)
+                
 
 if __name__ == "__main__":
     main()

@@ -16,7 +16,7 @@ def parse(argv : list[str]) -> Namespace:
     parser.add_argument('-obs', '--obs-freq', type=int, metavar='Value',
                         default=50, help='Observation fequency value')
     parser.add_argument('-sc', '--sub-count', type=int, metavar='Values',
-                        dest='sub_count', default=-1, help='Number of independent subset spin matrices')
+                        dest='sub_count', default=0, help='Number of independent subset spin matrices')
     parser.add_argument('-d', '--domain', type=str, choices=['time', 't', 'f', 'freq'],
                         dest='domain', nargs='?', default='f', const='f', help='Data output domain type')
     parser.add_argument('-out', '-output', type=str, metavar='File Path',
