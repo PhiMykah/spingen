@@ -11,6 +11,10 @@ CENTER_PATH = 'DSS_region'
 MAT_NAME = "spin_matrix"
 type ele = ET.Element
 
+def loadSystems(xmlfile : str, system_count : int,
+                field_strength, points, spec_width, obs_freq) -> list[SpinSystem]:
+
+    return []
 def readXML(xmlfile : str) -> tuple[list[str], list[ppm], list[Hz], np.ndarray, ppm]:
     spin_names : list[str] = []
     chem_shifts : list[ppm] = []
@@ -126,3 +130,6 @@ def readXML(xmlfile : str) -> tuple[list[str], list[ppm], list[Hz], np.ndarray, 
 
 
     return spin_names, chem_shifts, lw_list, cMatrix.astype(float), center
+
+def loadSpinSystem() -> tuple[list[str], list[ppm], list[Hz], np.ndarray, ppm]: # type: ignore
+    pass

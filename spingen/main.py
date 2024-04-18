@@ -9,7 +9,8 @@ def main():
     """Main entry-point
     """
     argv = parse(sys.argv[1:])
-    names, shifts, widths, matrix, center = readXML(argv.input)
+
+    systems : list[SSystem] = []
     
     field_strength = argv.field_strength
     points = argv.points
@@ -19,7 +20,10 @@ def main():
     format = argv.fmt
     domain = argv.domain
     # Somewhere specify solvent
+    system_count = argv.sub_count
 
+    names, shifts, widths, matrix, center = readXML(argv.input)
+    
     newSystem = SSystem(names, shifts, widths, matrix, field_strength, points, spec_width, obs_freq, center)
 
     peaks = np.array(newSystem.peaklist())
