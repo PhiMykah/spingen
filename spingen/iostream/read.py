@@ -7,7 +7,7 @@ SPIN_NAME_PATH = 'spin_names/spin'
 CSHIFT_PATH = 'chemical_shifts_ppm/cs'
 COUPLING_PATH = 'couplings_Hz'
 CENTER_PATH = 'DSS_region'
-
+MAT_MAX = 8
 MAT_NAME = "spin_matrix"
 type ele = ET.Element
 
@@ -69,12 +69,12 @@ def loadSystems(xmlfile : str,
             primary_spin_matrix = cast(ele, root.find(CMAT_PATH))
 
             # If the primary spin matrix is too large, check to see if sub matrices exist
-            if len(primary_spin_matrix.findall(SPIN_NAME_PATH)) > 7: 
+            if len(primary_spin_matrix.findall(SPIN_NAME_PATH)) > MAT_MAX: 
                 matrices = root.findall(CMAT_PATH)
                 if len(matrices) <= 1:
                     raise(ValueError(
-                        'Primary spin matrix of size {} is too large!'.format(
-                            len(primary_spin_matrix.findall(SPIN_NAME_PATH))
+                        'Primary spin matrix of size {} is too large! Max size: {}'.format(
+                            len(primary_spin_matrix.findall(SPIN_NAME_PATH), MAT_MAX)
                         )))
                 else: 
                     for i in range(1, len(matrices)):
