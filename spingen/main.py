@@ -16,7 +16,7 @@ def main():
     points = argv.points
     spec_width = argv.spec_width
     obs_freq = argv.obs_freq
-    output_file = Path(argv.out).stem
+    output = Path(argv.out).stem
     format = argv.fmt
     domain = argv.domain
     # Somewhere specify solvent
@@ -24,22 +24,25 @@ def main():
 
     systems = loadSystems(argv.input, system_count, field_strength, points, spec_width, obs_freq)
 
-    for i in range(len(systems)):
-        peaks = np.array(systems[i].peaklist())
-        # if domain in ['t', 'time']:
-        #     peaks = frequency_to_time(peaks)
+    output_system = systems[0]
 
-        if len(systems) == 1:
-            output = output_file
-        else:
-            output = output_file + "_{:02}".format(i+1)
-        match format:
-            case 'npy':
-                np.save(output, peaks)
-            case 'csv':
-                np.savetxt(f"{output}.{format}", peaks, delimiter=',')
-            case _:
-                np.savetxt(f"{output}.{format}", peaks)
+    for i in range(1, len(systems)):
+        output_system += systems[i]
+    
+    peaks = np.array(output_system.peaklist())
+    # if domain in ['t', 'time']:
+    #     peaks = frequency_to_time(peaks)
+    # if len(systems) == 1:
+    #     output = output_file
+    # else:
+    #     output = output_file + "_{:02}".format(i+1)
+    match format:
+        case 'npy':
+            np.save(output, peaks)
+        case 'csv':
+            np.savetxt(f"{output}.{format}", peaks, delimiter=',')
+        case _:
+            np.savetxt(f"{output}.{format}", peaks)
                 
 
 if __name__ == "__main__":

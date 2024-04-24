@@ -7,13 +7,13 @@ def parse(argv : list[str]) -> Namespace:
     parser.add_argument('-help', action='help')
     parser.add_argument('-in', '--input', type=str, metavar='File Path',
                         required=True, help="Input XML file for spin matrix")
-    parser.add_argument('-fs', '--field-strength', type=int, metavar='Value (HZ)', 
+    parser.add_argument('-fs', '--field-strength', type=float, metavar='Value (MHZ)', 
                         default=500, help="NMR instrument field strength for conversions")
     parser.add_argument('-pts', '--points', type=int, metavar='Value',
                         default=1000, help="NMR resolution by number of points")
-    parser.add_argument('-sw', '--spec-width', type=int, metavar='Value',
+    parser.add_argument('-sw', '--spec-width', type=float, metavar='Value',
                         default=50, help="Spectral width of NMR data")
-    parser.add_argument('-obs', '--obs-freq', type=int, metavar='Value',
+    parser.add_argument('-obs', '--obs-freq', type=float, metavar='Value',
                         default=50, help='Observation fequency value')
     parser.add_argument('-sc', '--sub-count', type=int, metavar='Values',
                         dest='sub_count', default=0, help='Number of independent subset spin matrices')
