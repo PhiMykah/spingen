@@ -19,6 +19,8 @@ def main():
     output = Path(argv.out).stem
     format = argv.fmt
     domain = argv.domain
+    convert = argv.convert
+
     # Somewhere specify solvent
     system_count = argv.sub_count
 
@@ -43,7 +45,42 @@ def main():
             np.savetxt(f"{output}.{format}", peaks, delimiter=',')
         case _:
             np.savetxt(f"{output}.{format}", peaks)
-                
+    
+    if not convert:
+        return
+    
+    print("Importing nmrPype...", file=sys.stderr)
+    import nmrPype
 
+    df = nmrPype.DataFrame(convert)
+
+    if df.array.ndim != 1:
+        raise ValueError("Unsupported NMRPipe file dimensionality!")
+    
+    x_vals = np.arange(1, len(df.array)+1)
+
+    sw = df.getParam("NDSW") 
+    obs = df.getParam("NDOBS")
+    orig = df.getParam("NDORIG")
+    size = df.getParam("NDSIZE")
+
+    sw  = 1.0 if (sw == 0.0) else sw
+    obs = 1.0 if (obs == 0.0) else obs
+
+    delta = -sw/(size)
+    first = orig - delta*(size - 1)
+
+    specValPPM  = (first + (x_vals - 1.0)*delta)/obs
+
+    converted_array = np.array([specValPPM, df.array]).T
+
+    nmr_output = Path(convert).stem
+    match format:
+        case 'npy':
+            np.save(nmr_output, converted_array)
+        case 'csv':
+            np.savetxt(f"{nmr_output}.{format}", converted_array, delimiter=',')
+        case _:
+            np.savetxt(f"{nmr_output}.{format}", converted_array)
 if __name__ == "__main__":
     main()
