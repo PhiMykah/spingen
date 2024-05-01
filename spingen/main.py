@@ -4,6 +4,7 @@ from spingen.data import SSystem, frequency_to_time
 import numpy as np
 from spingen.iostream import loadSystems
 from pathlib import Path
+from nmrsim.plt import mplplot
 
 def main():
     """Main entry-point
@@ -31,7 +32,8 @@ def main():
     for i in range(1, len(systems)):
         output_system += systems[i]
     
-    peaks = np.array(output_system.peaklist())
+    x,y = mplplot(output_system.peaklist(), hidden=True)
+    peaks = np.array([x,y]).T
     # if domain in ['t', 'time']:
     #     peaks = frequency_to_time(peaks)
     # if len(systems) == 1:
