@@ -6,12 +6,24 @@ from spingen.iostream import loadSystems
 from pathlib import Path
 from nmrsim.plt import mplplot
 
+def get_peaks(input, system_count=0, field_strength=500, points=1000, spec_width=50, obs_freq=50) -> np.ndarray:   
+    systems : list[SSystem] = []
+    systems = loadSystems(input, system_count, field_strength, points, spec_width, obs_freq)
+
+    output_system = systems[0]
+
+    for i in range(1, len(systems)):
+        output_system += systems[i]
+    
+    x,y = mplplot(output_system.peaklist(), hidden=True)
+    peaks = np.array([x,y]).T
+
+    return peaks
+
 def main():
     """Main entry-point
     """
     argv = parse(sys.argv[1:])
-
-    systems : list[SSystem] = []
     
     field_strength = argv.field_strength
     points = argv.points
@@ -22,18 +34,12 @@ def main():
     domain = argv.domain
     convert = argv.convert
 
+
     # Somewhere specify solvent
     system_count = argv.sub_count
 
-    systems = loadSystems(argv.input, system_count, field_strength, points, spec_width, obs_freq)
-
-    output_system = systems[0]
-
-    for i in range(1, len(systems)):
-        output_system += systems[i]
+    peaks = get_peaks(argv.input, system_count, field_strength, points, spec_width, obs_freq)
     
-    x,y = mplplot(output_system.peaklist(), hidden=True)
-    peaks = np.array([x,y]).T
     # if domain in ['t', 'time']:
     #     peaks = frequency_to_time(peaks)
     # if len(systems) == 1:
@@ -84,5 +90,6 @@ def main():
             np.savetxt(f"{nmr_output}.{format}", converted_array, delimiter=',')
         case _:
             np.savetxt(f"{nmr_output}.{format}", converted_array)
+
 if __name__ == "__main__":
     main()
