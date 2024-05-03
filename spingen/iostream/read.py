@@ -11,13 +11,13 @@ MAT_MAX = 8
 MAT_NAME = "spin_matrix"
 type ele = ET.Element
 
-def loadSystems(xmlfile : str, 
+def generateSystems(xmlfile : str, 
                 system_count : int,
                 field_strength : int,
                 points : int, 
                 spec_width : int,
                 obs_freq : int) -> list[SSystem]:
-    """Load a number of spin systems based on the matrix size or submatrices
+    """Load from xml and then create number of spin systems based on the matrix size or submatrices
 
     Parameters
     ----------
@@ -47,28 +47,62 @@ def loadSystems(xmlfile : str,
     # Ensure positive integer
     system_count = system_count if system_count >= 0 else -1 * system_count
     spin_systems : list[SSystem] = []
+    systems : list[system] = []
+    line_widths : list[Hz] = []
+    systems, line_widths = loadSystems(xmlfile, system_count)
 
-    tree = ET.parse(xmlfile)
-    root = tree.getroot()
-    
+    for syst in systems:
+        spin_systems.append(
+            SSystem(syst.names, syst.cshifts, line_widths, syst.cmat.astype(float), field_strength, points, spec_width, obs_freq, syst.center)
+        )
+        
+    return spin_systems
+
+
+def get_line_widths(root: ele) -> list[Hz]:
     # Set Line width value
     # --------------------
     # Extra code is used for typing assertion, casting allegedly does not affect runtime
-    lw_element = root.find(LW_PATH)
-    if root.find(LW_PATH) is None:
-        line_width : Hz = 0.0
-    elif cast(ele, lw_element).text is None:
-        line_width : Hz = 0.0
+    lw_elements = root.findall(LW_PATH)
+    if root.findall(LW_PATH) is None:
+        line_widths : list[Hz] = [0.0]
+    elif cast(ele, lw_elements[0]).text is None:
+        line_widths : list[Hz] = [0.0]
     else:
-        lw_str = cast(str, cast(ele, lw_element).text)
-        line_width : Hz = float(lw_str)
+        line_widths : list[Hz] = [float(cast(str, cast(ele, element).text)) for element in lw_elements]
 
+    return line_widths
+
+
+def loadSystems(xmlfile : str, system_count : int = 0) -> tuple[list[system], list[Hz]]:
+    """Obtain information from a coupling matrix xml file system
+
+    Parameters
+    ----------
+    xmlfile : str
+        File path for the xml file
+    system_count : int
+        Number of submatrices in system (0 | 1 if only one)
+
+    Returns
+    -------
+    tuple[list[system], list[Hz]]
+        - list of systems containing:
+            - hydrogen name labels
+            - chemical shift list
+            - coupling matrix
+            - center measurement in ppm
+        - list of linewidths for main system and sub matrices
+    """
+    tree = ET.parse(xmlfile)
+    root = tree.getroot()
+
+    line_widths = get_line_widths(root)
+
+    systems = []
     match system_count:
-        # Check primary matric
         case 0 | 1:
             primary_spin_matrix = cast(ele, root.find(CMAT_PATH))
-
-            # If the primary spin matrix is too large, check to see if sub matrices exist
             if len(primary_spin_matrix.findall(SPIN_NAME_PATH)) > MAT_MAX: 
                 matrices = root.findall(CMAT_PATH)
                 if len(matrices) <= 1:
@@ -78,60 +112,28 @@ def loadSystems(xmlfile : str,
                         )))
                 else: 
                     for i in range(1, len(matrices)):
-                        spin_systems.append(
-                            loadSpinSystem(matrices[i], line_width, field_strength,
-                                       points, spec_width, obs_freq)
-                        )
-                    return spin_systems
-            
-            spin_systems.append(
-                loadSpinSystem(primary_spin_matrix, line_width, field_strength,
-                                       points, spec_width, obs_freq)
-            )
-                    
+                        systems.append(get_system(matrices[i]))
+
+                    return systems, line_widths
+
+            systems.append(get_system(primary_spin_matrix))
+
         case _:
             matrices = root.findall(CMAT_PATH)
             for i in range(1, system_count+1):
-                spin_systems.append(
-                    loadSpinSystem(matrices[i], line_width, field_strength,
-                                points, spec_width, obs_freq)
-                )
-            return spin_systems
-        
-    return spin_systems
+                systems.append(get_system(matrices[i]))
 
-def loadSpinSystem(spin_matrix : ele, line_width : Hz, field_strength : int,
-               points : int, spec_width : int, obs_freq : int) -> SSystem:
-    """Generate a spin system from an xml coupling matrix element
+    return systems, line_widths
 
-    Parameters
-    ----------
-    spin_matrix : ele
-        Target coupling matrix xml element tree
-    line_width : Hz
-        Line width for the spin system
-    field_strength : int
-        Field strength for the spin system
-    points : int
-        Number of points resolution for spin system
-    spec_width : int
-        Spectral width for spin system
-    obs_freq : int
-        Observation frequency for spin system
+def get_system(spin_matrix : ele) -> system:
+    spin_names = get_spin_names(spin_matrix)
+    chem_shifts = get_chemical_shifts(spin_matrix)
+    cMatrix = get_coupling_matrix(spin_matrix, len(chem_shifts))
+    center = get_center(spin_matrix)
+    return system(spin_names, chem_shifts, cMatrix, center)
 
-    Returns
-    -------
-    SpinSystem
-        Returns generate spin system using class wrapping nmrsim spinsystem
-
-    Raises
-    ------
-    ValueError
-        Raise a value error if number of chemical shifts does not match the number of hydrogens
-    """
-    spin_names : list[str] = []
-    chem_shifts : list[ppm] = []
-    couplings_list = []
+def get_spin_names(spin_matrix : ele ) -> list[str]:
+    spin_names = []
 
     # Set Spin names
     # --------------
@@ -150,6 +152,11 @@ def loadSpinSystem(spin_matrix : ele, line_width : Hz, field_strength : int,
                     spin_names.append(cast(str, name))
                 idx = idx + 1 % len(spin_name_list)
 
+    return spin_names
+
+def get_chemical_shifts(spin_matrix : ele) -> list[float]:
+    chem_shifts : list[ppm] = []
+
     # Set Chemical Shift values
     # -------------------------
     # Extra code is used for typing assertion, casting allegedly does not affect runtime
@@ -167,6 +174,11 @@ def loadSpinSystem(spin_matrix : ele, line_width : Hz, field_strength : int,
                     chem_shifts.append(float(val))
                 idx = idx + 1 % len(cshift_list)
 
+    return chem_shifts
+
+def get_coupling_matrix(spin_matrix : ele, N : int) -> np.ndarray:
+    couplings_list = []
+
     # Coupling values
     # ---------------
     # Extra code is used for typing assertion, casting allegedly does not affect runtime
@@ -183,13 +195,6 @@ def loadSpinSystem(spin_matrix : ele, line_width : Hz, field_strength : int,
                 couplings_list.append((int(spindex_pair[0]), int(spindex_pair[1]), float(val)))
             idx = idx + 1 % len(cpl_list)
 
-    if (len(spin_name_list) != len(cshift_list)):
-            raise ValueError(
-                "Spin names count %i and Number of chemical shifts %i do not match" %
-                (len(spin_name_list), len(cshift_list))
-            )
-    N : int = len(cshift_list)
-
     # Create coupling matrix
     # ----------------------
     cMatrix = np.zeros((N,N),dtype=(float,float))
@@ -199,15 +204,9 @@ def loadSpinSystem(spin_matrix : ele, line_width : Hz, field_strength : int,
             cMatrix[i-1][j-1] = val
             cMatrix[j-1][i-1] = val
 
-    # Create lw list
-    # --------------
-    if (type(line_width) == list[Hz]):
-        lw_list: list[Hz] = line_width
-    else:
-        lw_list: list[Hz] = []
-        for i in range(N):
-            lw_list.append(line_width)
+    return cMatrix
 
+def get_center(spin_matrix : ele) -> ppm:
     # Obtain center point
     # -------------------
     center_min = spin_matrix.find(CENTER_PATH + '/min_ppm')
@@ -222,4 +221,55 @@ def loadSpinSystem(spin_matrix : ele, line_width : Hz, field_strength : int,
         center_right = cast(str, cast(ele, center_max).text)
         center : ppm = (float(center_left) + float(center_right)) / 2
 
-    return SSystem(spin_names, chem_shifts, lw_list, cMatrix.astype(float), field_strength, points, spec_width, obs_freq, center)
+    return center
+
+"""
+def loadSpinSystem(spin_matrix : ele, line_widths : list[Hz], field_strength : int,
+               points : int, spec_width : int, obs_freq : int) -> SSystem:
+    # Generate a spin system from an xml coupling matrix element
+
+    # Parameters
+    # ----------
+    # spin_matrix : ele
+    #     Target coupling matrix xml element tree
+    # line_width : Hz
+    #     Line width for the spin system
+    # field_strength : int
+    #     Field strength for the spin system
+    # points : int
+    #     Number of points resolution for spin system
+    # spec_width : int
+    #     Spectral width for spin system
+    # obs_freq : int
+    #     Observation frequency for spin system
+
+    # Returns
+    # -------
+    # SpinSystem
+    #     Returns generate spin system using class wrapping nmrsim spinsystem
+
+    # Raises
+    # ------
+    # ValueError
+    #     Raise a value error if number of chemical shifts does not match the number of hydrogens
+
+    # Set Spin names
+    # --------------
+    spin_names : list[str] = get_spin_names(spin_matrix)
+
+    # Set Chemical Shift values
+    # -------------------------
+    chem_shifts : list[ppm] = get_chemical_shifts(spin_matrix)
+
+    N = len(chem_shifts)
+
+    # Create coupling matrix
+    # ----------------------
+    cMatrix = get_coupling_matrix(spin_matrix, N)
+    
+    # Obtain center point
+    # -------------------
+    center = get_center(spin_matrix)
+
+    return SSystem(spin_names, chem_shifts, line_widths, cMatrix.astype(float), field_strength, points, spec_width, obs_freq, center)
+"""

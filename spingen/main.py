@@ -1,24 +1,8 @@
 import sys
-from spingen.parser import *
-from spingen.data import SSystem, frequency_to_time
+from .parser import *
 import numpy as np
-from spingen.iostream import loadSystems
 from pathlib import Path
-from nmrsim.plt import mplplot
-
-def get_peaks(input, system_count=0, field_strength=500, points=1000, spec_width=50, obs_freq=50) -> np.ndarray:   
-    systems : list[SSystem] = []
-    systems = loadSystems(input, system_count, field_strength, points, spec_width, obs_freq)
-
-    output_system = systems[0]
-
-    for i in range(1, len(systems)):
-        output_system += systems[i]
-    
-    x,y = mplplot(output_system.peaklist(), hidden=True)
-    peaks = np.array([x,y]).T
-
-    return peaks
+from .modules import nmrConvert, get_peaksXML
 
 def main():
     """Main entry-point
@@ -34,11 +18,10 @@ def main():
     domain = argv.domain
     convert = argv.convert
 
-
     # Somewhere specify solvent
     system_count = argv.sub_count
 
-    peaks = get_peaks(argv.input, system_count, field_strength, points, spec_width, obs_freq)
+    peaks = get_peaksXML(argv.input, system_count, field_strength, points, spec_width, obs_freq)
     
     # if domain in ['t', 'time']:
     #     peaks = frequency_to_time(peaks)
@@ -57,39 +40,16 @@ def main():
     if not convert:
         return
     
-    print("Importing nmrPype...", file=sys.stderr)
-    import nmrPype
-
-    df = nmrPype.DataFrame(convert)
-
-    if df.array.ndim != 1:
-        raise ValueError("Unsupported NMRPipe file dimensionality!")
-    
-    x_vals = np.arange(1, len(df.array)+1)
-
-    sw = df.getParam("NDSW") 
-    obs = df.getParam("NDOBS")
-    orig = df.getParam("NDORIG")
-    size = df.getParam("NDSIZE")
-
-    sw  = 1.0 if (sw == 0.0) else sw
-    obs = 1.0 if (obs == 0.0) else obs
-
-    delta = -sw/(size)
-    first = orig - delta*(size - 1)
-
-    specValPPM  = (first + (x_vals - 1.0)*delta)/obs
-
-    converted_array = np.array([specValPPM, df.array]).T
+    nmr_peaks = nmrConvert(convert)
 
     nmr_output = Path(convert).stem
     match format:
         case 'npy':
-            np.save(nmr_output, converted_array)
+            np.save(nmr_output, nmr_peaks)
         case 'csv':
-            np.savetxt(f"{nmr_output}.{format}", converted_array, delimiter=',')
+            np.savetxt(f"{nmr_output}.{format}", nmr_peaks, delimiter=',')
         case _:
-            np.savetxt(f"{nmr_output}.{format}", converted_array)
+            np.savetxt(f"{nmr_output}.{format}", nmr_peaks)
 
 if __name__ == "__main__":
     main()

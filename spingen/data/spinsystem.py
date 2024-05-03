@@ -77,3 +77,23 @@ class SSystem(SpinSystem):
         self.center = center
 
         super().__init__(self.chem_shifts, cMatrix)
+
+class system(object):
+    def __init__(self, names : list[str], cshifts : list[Hz], cmat : np.ndarray, center : ppm) -> None:
+        """system object with attributes describing spin matrix system
+
+        Parameters
+        ----------
+        names : list[str]
+            list of proton names
+        cshifts : list[Hz]
+            list of chemical shifts per proton
+        cmat : ndarray
+            coupling matrix
+        center : ppm
+            center value for measurement
+        """
+        self.names = names
+        self.cshifts = cshifts
+        self.cmat = cmat
+        self.center = center
