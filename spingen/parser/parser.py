@@ -25,4 +25,5 @@ def parse(argv : list[str]) -> Namespace:
                         nargs='?', default='csv', const='csv', help='Designated output file format')
     parser.add_argument('-convert', type=str, metavar='NMR File', dest='convert',
                         default='', help='NMRPipe format file to convert to ppm')
+    parser.add_argument('-w', type=float, default=1, metavar='[1]', dest='w', help='Peak width at half height')
     return parser.parse_args(argv)

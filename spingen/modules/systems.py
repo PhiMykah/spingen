@@ -5,7 +5,7 @@ import numpy as np
 from sys import stderr
 
 def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500, 
-                 points : int =1000, spec_width : float = 50, obs_freq : float = 50) -> np.ndarray:
+                 points : int = 1000, spec_width : float = 50, obs_freq : float = 50, w : float = 1) -> np.ndarray:
     """Obtain an x,y peaks array from an xml file with given parameters
 
     Parameters
@@ -22,7 +22,8 @@ def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500,
         Spectral width of system, by default 50
     obs_freq : float, optional
         Observation frequency of measurement device, by default 50
-
+    w : float
+        Peak width at half height
     Returns
     -------
     ndarray
@@ -36,14 +37,14 @@ def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500,
     for i in range(1, len(systems)):
         output_system += systems[i]
     
-    x,y = mplplot(output_system.peaklist(), hidden=True)
+    x,y = mplplot(output_system.peaklist(), w=w, hidden=True)
     peaks = np.array([x,y]).T
 
     return peaks
 
 def get_peaks(systems : list[system], line_widths : list[Hz], system_count : int = 0,
               field_strength : float = 500, points : int = 1000, spec_width : float = 50,
-              obs_freq : float = 50) -> np.ndarray:
+              obs_freq : float = 50, w : float = 1) -> np.ndarray:
     """Obtain an x,y peaks array from a system set with given parameters
 
     Parameters
@@ -62,7 +63,9 @@ def get_peaks(systems : list[system], line_widths : list[Hz], system_count : int
         Spectral width of system, by default 50
     obs_freq : float, optional
         Observation frequency of measurement device, by default 50
-
+    w : float
+        Peak width at half height
+        
     Returns
     -------
     ndarray
@@ -77,7 +80,7 @@ def get_peaks(systems : list[system], line_widths : list[Hz], system_count : int
     for i in range(1, len(ssystems)):
         output_system += ssystems[i]
 
-    x,y = mplplot(output_system.peaklist(), hidden=True)
+    x,y = mplplot(output_system.peaklist(), w=w, hidden=True)
     peaks = np.array([x,y]).T
 
     return peaks

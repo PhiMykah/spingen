@@ -17,11 +17,12 @@ def main():
     format = argv.fmt
     domain = argv.domain
     convert = argv.convert
+    w = argv.w
 
     # Somewhere specify solvent
     system_count = argv.sub_count
 
-    peaks = get_peaksXML(argv.input, system_count, field_strength, points, spec_width, obs_freq)
+    peaks = get_peaksXML(argv.input, system_count, field_strength, points, spec_width, obs_freq, w)
     
     # if domain in ['t', 'time']:
     #     peaks = frequency_to_time(peaks)
