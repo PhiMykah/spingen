@@ -1,8 +1,8 @@
 import sys
-from .parser import *
+from spingen.parser import *
 import numpy as np
 from pathlib import Path
-from .modules import nmrConvert, get_peaksXML
+from spingen.modules import nmrConvert, get_peaksXML
 
 def main():
     """Main entry-point

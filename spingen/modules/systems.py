@@ -1,11 +1,11 @@
-from ..data import SSystem, system, Hz
+from ..data import SSystem, System, Hz
 from ..iostream import generateSystems
 from nmrsim.plt import mplplot
 import numpy as np
 from sys import stderr
 
-def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500, 
-                 points : int = 1000, spec_width : float = 50, obs_freq : float = 50, w : float = 1) -> np.ndarray:
+def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500.0, 
+                 points : int = 1000, spec_width : float = 50.0, obs_freq : float = 50.0, w : int = 1) -> np.ndarray:
     """Obtain an x,y peaks array from an xml file with given parameters
 
     Parameters
@@ -22,7 +22,7 @@ def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500,
         Spectral width of system, by default 50
     obs_freq : float, optional
         Observation frequency of measurement device, by default 50
-    w : float
+    w : int
         Peak width at half height
     Returns
     -------
@@ -42,9 +42,9 @@ def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500,
 
     return peaks
 
-def get_peaks(systems : list[system], line_widths : list[Hz], system_count : int = 0,
+def get_peaks(systems : list[System], line_widths : list[Hz], system_count : int = 0,
               field_strength : float = 500, points : int = 1000, spec_width : float = 50,
-              obs_freq : float = 50, w : float = 1) -> np.ndarray:
+              obs_freq : float = 50, w : int = 1) -> np.ndarray:
     """Obtain an x,y peaks array from a system set with given parameters
 
     Parameters
@@ -63,7 +63,7 @@ def get_peaks(systems : list[system], line_widths : list[Hz], system_count : int
         Spectral width of system, by default 50
     obs_freq : float, optional
         Observation frequency of measurement device, by default 50
-    w : float
+    w : int
         Peak width at half height
         
     Returns
@@ -102,16 +102,19 @@ def nmrConvert(convert) -> np.ndarray:
     Raises
     ------
     ValueError
-        Raises an error if the NMR data is multi-dimensional
+        Raises an error if the NMR data is multi-dimensional or contains an empty array
     """
     print("Importing nmrPype...", file=stderr)
     import nmrPype
 
     df = nmrPype.DataFrame(convert)
 
+    if df.array is None:
+        raise ValueError("nmrPype array is empty!")
     if df.array.ndim != 1:
         raise ValueError("Unsupported NMRPipe file dimensionality!")
     
+
     x_vals = np.arange(1, len(df.array)+1)
 
     sw = df.getParam("NDSW") 

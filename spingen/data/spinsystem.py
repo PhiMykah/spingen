@@ -78,7 +78,7 @@ class SSystem(SpinSystem):
 
         super().__init__(self.chem_shifts, cMatrix)
 
-class system(object):
+class System(object):
     def __init__(self, names : list[str], cshifts : list[Hz], cmat : np.ndarray, center : ppm) -> None:
         """system object with attributes describing spin matrix system
 

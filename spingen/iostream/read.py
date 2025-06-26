@@ -13,10 +13,10 @@ type ele = ET.Element
 
 def generateSystems(xmlfile : str, 
                 system_count : int,
-                field_strength : int,
+                field_strength : float,
                 points : int, 
-                spec_width : int,
-                obs_freq : int) -> list[SSystem]:
+                spec_width : float,
+                obs_freq : float) -> list[SSystem]:
     """Load from xml and then create number of spin systems based on the matrix size or submatrices
 
     Parameters
@@ -25,13 +25,13 @@ def generateSystems(xmlfile : str,
         String represesntation of the xml file path 
     system_count : int
         Number of sub matrices to look for, if -1 or 1 then attempt loading the first matrix
-    field_strength : int
+    field_strength : float
         Field strength for spin system initialization
     points : int
         Point count resolution for spin system initialization
-    spec_width : int
+    spec_width : float
         Spectral width for spin system initialization
-    obs_freq : int
+    obs_freq : float
         Observation frequency for spin system
 
     Returns
@@ -47,7 +47,7 @@ def generateSystems(xmlfile : str,
     # Ensure positive integer
     system_count = system_count if system_count >= 0 else -1 * system_count
     spin_systems : list[SSystem] = []
-    systems : list[system] = []
+    systems : list[System] = []
     line_widths : list[Hz] = []
     systems, line_widths = loadSystems(xmlfile, system_count)
 
@@ -74,7 +74,7 @@ def get_line_widths(root: ele) -> list[Hz]:
     return line_widths
 
 
-def loadSystems(xmlfile : str, system_count : int = 0) -> tuple[list[system], list[Hz]]:
+def loadSystems(xmlfile : str, system_count : int = 0) -> tuple[list[System], list[Hz]]:
     """Obtain information from a coupling matrix xml file system
 
     Parameters
@@ -108,8 +108,8 @@ def loadSystems(xmlfile : str, system_count : int = 0) -> tuple[list[system], li
                 if len(matrices) <= 1:
                     raise(ValueError(
                         'Primary spin matrix of size {} is too large! Max size: {}'.format(
-                            len(primary_spin_matrix.findall(SPIN_NAME_PATH), MAT_MAX)
-                        )))
+                            len(primary_spin_matrix.findall(SPIN_NAME_PATH)), MAT_MAX)
+                        ))
                 else: 
                     for i in range(1, len(matrices)):
                         systems.append(get_system(matrices[i]))
@@ -125,12 +125,12 @@ def loadSystems(xmlfile : str, system_count : int = 0) -> tuple[list[system], li
 
     return systems, line_widths
 
-def get_system(spin_matrix : ele) -> system:
+def get_system(spin_matrix : ele) -> System:
     spin_names = get_spin_names(spin_matrix)
     chem_shifts = get_chemical_shifts(spin_matrix)
     cMatrix = get_coupling_matrix(spin_matrix, len(chem_shifts))
     center = get_center(spin_matrix)
-    return system(spin_names, chem_shifts, cMatrix, center)
+    return System(spin_names, chem_shifts, cMatrix, center)
 
 def get_spin_names(spin_matrix : ele ) -> list[str]:
     spin_names = []

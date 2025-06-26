@@ -6,6 +6,7 @@ setup(name='spingen',
     install_requires=[
         'nmrsim',
         'numpy',
+        'nmrPype'
     ],
     entry_points={
         'console_scripts': [
