@@ -6,7 +6,9 @@ def parse(argv : list[str]) -> Namespace:
 
     parser.add_argument('-help', action='help')
     parser.add_argument('-in', '--input', type=str, metavar='File Path',
-                        required=True, help="Input XML file for spin matrix")
+                        required=True, help="Input XML file for spin matrix or spin matrix text")
+    parser.add_argument('-lw', '--line-widths', type=list, metavar='Line Width Values', dest='lw',
+                        nargs='+', default=None, help='Line widths for each molecule when loading text')
     parser.add_argument('-fs', '--field-strength', type=float, metavar='Value (MHZ)', 
                         default=500, help="NMR instrument field strength for conversions")
     parser.add_argument('-pts', '--points', type=int, metavar='Value',

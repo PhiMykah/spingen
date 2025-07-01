@@ -1,5 +1,5 @@
 from ..data import SSystem, System, Hz
-from ..iostream import generateSystems
+from ..iostream import generateSystems, loadSystemFromFile
 from nmrsim.plt import mplplot
 import numpy as np
 from sys import stderr
@@ -11,7 +11,7 @@ def get_peaksXML(input : str, system_count : int = 0, field_strength : Hz = 500.
     Parameters
     ----------
     input : str
-        imput xml file path as a string
+        input xml file path as a string
     system_count : int, optional
         Number of submatrices in the system, by default 0
     field_strength : Hz, optional
@@ -85,6 +85,42 @@ def get_peaks(systems : list[System], line_widths : list[Hz], system_count : int
 
     return peaks
 
+def get_peaks_from_file(input : str, lws : list[float] , field_strength : Hz = 500.0, 
+                 points : int = 1000, spec_width : float = 50.0, obs_freq : float = 50.0, w : int = 1) -> np.ndarray:
+    """Obtain an x,y peaks array from an non-xml with given parameters
+
+    Parameters
+    ----------
+    input : str
+        input file path as a string
+    lws : list[float]
+        Line-widths of the molecules (1 or all)
+    system_count : int, optional
+        Number of submatrices in the system, by default 0
+    field_strength : Hz, optional
+        Field strength of measurement device, by default 500
+    points : int, optional
+        Number of points to sample, does not affect peaks but increases resolution, by default 1000
+    spec_width : float, optional
+        Spectral width of system, by default 50
+    obs_freq : float, optional
+        Observation frequency of measurement device, by default 50
+    w : int
+        Peak width at half height
+    Returns
+    -------
+    ndarray
+        2D array of peaks of shape (len(x),2)
+    """
+    syst : System = loadSystemFromFile(input)
+    
+    ssystem = SSystem(syst.names, syst.cshifts, lws, syst.cmat.astype(float),
+                      field_strength, points, spec_width, obs_freq, syst.center)
+    
+    x,y = mplplot(ssystem.peaklist(), w=w, hidden=True)
+    peaks = np.array([x,y]).T
+
+    return peaks
 
 def nmrConvert(convert) -> np.ndarray:
     """convert NMR data into an (x,y) array in PPM

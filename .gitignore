@@ -179,3 +179,5 @@ cython_debug/
 
 # Testing files
 test*.*
+sample_data*
+output/*

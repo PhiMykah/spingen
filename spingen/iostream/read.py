@@ -125,6 +125,55 @@ def loadSystems(xmlfile : str, system_count : int = 0) -> tuple[list[System], li
 
     return systems, line_widths
 
+def loadSystemFromFile(file : str) -> System:
+    """
+    Parse a text file and return a System object.
+
+    Parameters
+    ----------
+    file : str
+        File path for the text file
+
+    Returns
+    -------
+    System
+        Returns a system with:
+            - hydrogen name labels
+            - chemical shift list
+            - coupling matrix
+            - center measurement in ppm
+    """
+
+    with open(file, 'r') as f:
+        lines = [line.strip() for line in f if line.strip()]
+
+    # Last line is spin names
+    spin_names = lines[0].split() # skip the first column header
+
+    # All lines except last are matrix rows
+    matrix_lines = lines[1:-1]  # skip the first header and last spin names
+
+    N = len(spin_names)
+    cmat = np.zeros((N, N), dtype=float)
+    chem_shifts = []
+
+    for i, line in enumerate(matrix_lines):
+        parts = line.split()
+        # Diagonal value is the chemical shift
+        chem_shifts.append(float(parts[i+1]))
+        for j in range(N):
+            if i == j:
+                cmat[i, j] = 0.0  # Set diagonal (chemical shift) to 0
+            else:
+                cmat[i, j] = float(parts[j+1])
+    # Reflect cmat across the diagonal to ensure symmetry
+    cmat = (cmat + cmat.T)
+
+    # No center value in this format, set to 0.0
+    center = 0.0
+
+    return System(spin_names, chem_shifts, cmat, center)
+
 def get_system(spin_matrix : ele) -> System:
     spin_names = get_spin_names(spin_matrix)
     chem_shifts = get_chemical_shifts(spin_matrix)

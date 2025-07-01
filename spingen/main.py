@@ -2,7 +2,7 @@ import sys
 from spingen.parser import *
 import numpy as np
 from pathlib import Path
-from spingen.modules import nmrConvert, get_peaksXML
+from spingen.modules import nmrConvert, get_peaksXML, get_peaks_from_file
 
 def main():
     """Main entry-point
@@ -13,6 +13,8 @@ def main():
     points = argv.points
     spec_width = argv.spec_width
     obs_freq = argv.obs_freq
+    input : str = argv.input
+    lws : list[float] | None = argv.lw
     output = Path(argv.out).stem
     format = argv.fmt
     domain = argv.domain
@@ -22,7 +24,12 @@ def main():
     # Somewhere specify solvent
     system_count = argv.sub_count
 
-    peaks = get_peaksXML(argv.input, system_count, field_strength, points, spec_width, obs_freq, w)
+    if input.lower().endswith('.xml'):
+        peaks = get_peaksXML(input, system_count, field_strength, points, spec_width, obs_freq, w)
+    else:
+        if lws is None:
+            lws = [1.0]
+        peaks = get_peaks_from_file(input, lws, field_strength, points, spec_width, obs_freq, w)
     
     # if domain in ['t', 'time']:
     #     peaks = frequency_to_time(peaks)
